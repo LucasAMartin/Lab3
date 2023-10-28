@@ -3,19 +3,15 @@
 #include <stdbool.h>
 #include <pthread.h>
 
-#define DEFAULT_ELEMENTS 500
+#define DEFAULT_ELEMENTS 8
 
 int N; // Size of the matrix
 int *array;
 bool stop = false;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-void *check_stop_criteria(void *arg);
-void print_matrix();
-
-
 // Functions shared for both problems
-void create_threads(pthread_t *threads, int *thread_ids, int M, void *(*start_routine) (void *))
+void create_threads(pthread_t *threads, int *thread_ids, int M, void *(*start_routine)(void *))
 {
     for (int i = 0; i < M; i++)
     {
@@ -101,7 +97,8 @@ void *check_stop_criteria(void *arg)
 
         stop = all_zero || all_one;
 
-        if (stop) break; // Exit the loop if stop is true
+        if (stop)
+            break; // Exit the loop if stop is true
     }
 
     return NULL;
@@ -203,7 +200,7 @@ void *problem2(void *arg)
         }
         array[j + 1] = key;
 
-        printf("Thread %d has inserted %d at position %d in the array.\n", thread_id, key, j+1);
+        printf("Thread %d has inserted %d at position %d in the array.\n", thread_id, key, j + 1);
 
         pthread_mutex_unlock(&lock); // Unlock the mutex after accessing the shared variable
     }
@@ -216,16 +213,20 @@ int main(int argc, char *argv[])
     N = DEFAULT_ELEMENTS; // Default size
     if (argc > 1)
     {
-        char *end;
-        long val = strtol(argv[1], &end, 10);
-        if (end == argv[1] || *end != '\0' || ((val == LONG_MIN || val == LONG_MAX) && errno == ERANGE))
+        char *ptr;
+        long input = strtol(argv[1], &ptr, 10);
+        if (*ptr == '\0')
         {
-            printf("Invalid integer argument.\n");
+            N = (int)input;
         }
         else
         {
-            N = (int)val;
+            printf("Using Default Size of %d\n", N);
         }
+    }
+    else
+    {
+        printf("Using Default Size of %d\n", N);
     }
 
     do
@@ -247,76 +248,72 @@ int main(int argc, char *argv[])
 
         switch (choice)
         {
-            case 1:
-            {
-                array = malloc(N * N * sizeof(int));
+        case 1:
+        {
+            array = malloc(N * N * sizeof(int));
 
-                // Randomly fill the matrix with 0s and 1s
-                fill_matrix();
-                printf("The starting matrix:\n");
-                print_matrix();
+            // Randomly fill the matrix with 0s and 1s
+            fill_matrix();
+            printf("The starting matrix:\n");
+            print_matrix();
 
-                // Create a separate thread for checking the stopping criteria
-                pthread_create(&stop_thread, NULL, check_stop_criteria, NULL);
+            // Create a separate thread for checking the stopping criteria
+            pthread_create(&stop_thread, NULL, check_stop_criteria, NULL);
 
-                // Create M threads for problem 1
-                create_threads(threads, thread_ids, M, problem1);
+            // Create M threads for problem 1
+            create_threads(threads, thread_ids, M, problem1);
 
-                // Join all threads
-                join_threads(threads, M);
-                pthread_join(stop_thread, NULL);
+            // Join all threads
+            join_threads(threads, M);
+            pthread_join(stop_thread, NULL);
 
-                printf("The ending matrix:\n");
-                print_matrix();
-                stop = false;
-                free(array);
-                free(thread_ids); // Free the memory for thread_ids after all threads have finished executing
-                break;
-            }
-            case 2:
-            {
-                array = malloc(N * sizeof(int));
+            printf("The ending matrix:\n");
+            print_matrix();
+            stop = false;
+            free(array);
+            free(thread_ids); // Free the memory for thread_ids after all threads have finished executing
+            break;
+        }
+        case 2:
+        {
+            array = malloc(N * sizeof(int));
 
-                // Randomly fill the array with numbers
-                fill_array();
-                printf("Original Array: ");
-                print_array();
+            // Randomly fill the array with numbers
+            fill_array();
+            printf("Original Array: ");
+            print_array();
 
-                pthread_create(&stop_thread, NULL, check_sorted, NULL);
+            pthread_create(&stop_thread, NULL, check_sorted, NULL);
 
-                // Create M threads for problem 2
-                create_threads(threads, thread_ids, M, problem2);
+            // Create M threads for problem 2
+            create_threads(threads, thread_ids, M, problem2);
 
-                // Join all threads
-                join_threads(threads, M);
-                pthread_join(stop_thread, NULL);
+            // Join all threads
+            join_threads(threads, M);
+            pthread_join(stop_thread, NULL);
 
-                printf("Sorted Array: ");
-                print_array();
+            printf("Sorted Array: ");
+            print_array();
 
-                free(array);
-                free(thread_ids); // Free the memory for thread_ids after all threads have finished executing
-                stop = false;
+            free(array);
+            free(thread_ids); // Free the memory for thread_ids after all threads have finished executing
+            stop = false;
 
+            break;
+        }
+        case 3:
+        {
+            printf("Exiting...\n");
 
-                break;
-            }
-            case 3:
-            {
-                printf("Exiting...\n");
+            break;
+        }
+        default:
+        {
 
-                break;
-            }
-            default:
-            {
-
-                printf("Invalid choice. Please enter a number between 1 and 3.\n");
-
-            }
+            printf("Invalid choice. Please enter a number between 1 and 3.\n");
+        }
         }
     } while (choice != 3);
 
     return 0;
 }
-
-
