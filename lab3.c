@@ -103,12 +103,23 @@ int validate_input()
 int display_menu()
 {
     int choice;
-    printf("Menu:\n");
-    printf("1. Problem 1\n");
-    printf("2. Problem 2\n");
-    printf("3. Exit\n");
-    printf("Enter your choice: ");
-    scanf("%d", &choice);
+    char input[50];
+
+    do {
+        printf("Menu:\n");
+        printf("1. Problem 1\n");
+        printf("2. Problem 2\n");
+        printf("3. Exit\n");
+        printf("Enter your choice: ");
+
+        fgets(input, sizeof(input), stdin);
+
+        if (sscanf(input, "%d", &choice) != 1 || choice < 1 || choice > 3) {
+            printf("Invalid input. Please enter a number between 1 and 3.\n");
+            choice = 0; // Set to invalid choice
+        }
+    } while (choice == 0); // Keep asking until a valid choice is entered
+
     return choice;
 }
 
